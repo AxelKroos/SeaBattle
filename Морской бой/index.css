@@ -1,0 +1,83 @@
+body {
+    background: #3c3769;
+}
+
+* {
+    box-sizing: border-box;
+
+}
+
+#parent {
+    position: relative;
+    top: 100px;
+    text-align:center;
+    width: 700px;
+    margin: 0 auto;
+    font-family: 'Comic Sans MS';
+    color: #b3f5ee;
+    font-size: 15px;
+    letter-spacing: 2px;
+}
+td {
+    width: 30px;
+    height: 30px;
+    border: 1px solid lightsteelblue;
+    text-align: center;
+    font-weight: bold;
+}
+
+table{
+    border-spacing: 0;
+    margin:0 auto;
+    margin-rigth: 40px;
+}
+
+#gamerField{
+    float: left;
+
+}
+
+#computerField{
+    float: right;
+}
+
+button{
+    padding:20px;
+    font-size:20px;
+    font-weight:bold;
+    font-family: 'Sfera';
+    font-size: 27px;
+    color: #25ae99;
+}
+
+td.ship{
+    background-color: aliceblue;
+    border: 2px solid #816126;!important
+}
+
+td.crashed{
+    background-color: #92124c;
+    border: 2px solid #ff0021;!important
+}
+
+td.miss{
+    background-color: #328284;
+    border: 1px solid #dfbcb0;
+}
+
+#info{
+    text-align : center;
+    font-size:20px;
+    color : #9c6666;
+}
+
+button{
+    margin-top: 20px;
+    background: #dd8a8a00;
+    cursor: pointer;
+    transition: .3s;
+}
+button:hover {
+    background: #8addd829;
+    transition: .3s;
+}

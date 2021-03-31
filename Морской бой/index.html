@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Морской бой</title>
+    <link rel="stylesheet" type="text/css"   href="index.css">
+    <script src="https://npmcdn.com/react@15.3.0/dist/react.js"></script>
+    <script src="https://npmcdn.com/react-dom@15.3.0/dist/react-dom.js"></script>
+    <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+</head>
+<body>
+<div id="content"></div>
+<script type="text/babel">
+
+    class App extends React.Component
+    {
+        constructor(){
+            super();
+            this.state = {
+                gamerfieldArr : [],
+                computerfieldArr : [],
+
+                //игровое поле компьютера, которое видимо игроку
+                computerFieldArrForGamer : [],
+
+                //массив с ячейками поля игрока, по которым компьютер ещё может стрелять
+                gamerFieldArrFreeToHit : [],
+
+                //количество поражённых клеток (для определения победителя)
+                //у игрока
+                gamerCrashedCells : 0,
+                //у компьютера
+                computerCrashedCells : 0,
+
+                info : '',
+
+                //флаг конца игры
+                endGame : false,
+
+                //флаг правильного попадания компьютера
+                computerIsAlreadyHit : false,
+
+                //массив с попаданиями игрока
+                computerCrashedCellsArr : [],
+
+                //массив с попаданиями компьютера
+                gamerCrashedCellsArr : [],
+            };
+        }
+
+        componentDidMount() {
+            let gamerField = this.createGameField();
+            let computerField = this.createGameField();
+
+            let computerFieldForGamer = this.createEmptyField();
+
+            this.state.gamerFieldArrFreeToHit = [];
+
+            for(let row = 0; row < 10; row++)
+            {
+                for(let col = 0; col < 10; col++)
+                {
+                    this.state.gamerFieldArrFreeToHit.push([row,col]);
+                }
+            }
+
+            this.setState({
+                gamerfieldArr : gamerField,
+                computerfieldArr : computerField,
+                computerFieldArrForGamer : computerFieldForGamer,
+                gamerFieldArrFreeToHit : this.state.gamerFieldArrFreeToHit,
+                gamerCrashedCells : 0,
+                computerCrashedCells : 0,
+                info : '',
+                endGame : false,
+                computerIsAlreadyHit : false,
+                computerCrashedCellsArr : [],
+                gamerCrashedCellsArr : [],
+            });
+        }
+
+        //создает пустое поле 10 на 10
+        createEmptyField()
+        {
+            let fieldArr = [];
+            for(let row = 0; row < 10; row++)
+            {
+                fieldArr[row]=[];
+                for(let col = 0; col < 10; col++)
+                {
+                    fieldArr[row][col] = '';
+                }
+            }
+
+            return fieldArr;
+        }
+
+        //создает игровое поле 10 на 10 с добавленными кораблями в случайном порядке
+        createGameField()
+        {
+            let fieldArr = this.createEmptyField();
+
+            fieldArr = this.addShip4Cells(fieldArr);
+            fieldArr = this.addShip3Cells(fieldArr);
+            fieldArr = this.addShip3Cells(fieldArr);
+            fieldArr = this.addShip2Cells(fieldArr);
+            fieldArr = this.addShip2Cells(fieldArr);
+            fieldArr = this.addShip2Cells(fieldArr);
+            fieldArr = this.addShip1Cell(fieldArr);
+            fieldArr = this.addShip1Cell(fieldArr);
+            fieldArr = this.addShip1Cell(fieldArr);
+            fieldArr = this.addShip1Cell(fieldArr);
+
+            return fieldArr;
+        }
+
+        //добавляет на игровое поле четырёхпалубный корабль
+        addShip4Cells(fieldArr)
+        {
+            let randomInteger = this.randomInteger;
+
+            //выбрать по вертикали или по горизонтали будет размещён корабль
+            let direction = randomInteger(1, 2);
+
+            if(direction == 1)
+            {
+                //размещаем по горизонтали
+                let col = randomInteger(0, 6);
+                let row = randomInteger(0, 9);
+
+                for(let i = 0; i < 4; i++)
+                {
+                    fieldArr[row][col + i] = 'ship';
+                }
+            }
+            else
+            {
+                //размещаем по вертикали
+                let row = randomInteger(0, 6);
+                let col = randomInteger(0, 9);
+                for(let i = 0; i < 4; i++)
+                {
+                    fieldArr[row + i][col] = 'ship';
+                }
+
+            }
+            this.addEmptyCells(fieldArr);
+            return fieldArr;
+        }
+
+        //проверяет, не занята ли линия(по вертикали или по горизонтали), куда мы собираемся вставить корабль
+        isFreeLine(fieldArr, row, col, num, checkLine)
+        {
+            for(let i = 0; i < num; i++)
+            {
+                if(checkLine == 'row')
+                {
+                    let elem = fieldArr[row][col + i];
+                    if(elem == 'ship' || elem == 'empty')
+                        return false;
+                }
+                else
+                {
+                    let elem = fieldArr[row + i][col];
+                    if(elem == 'ship' || elem == 'empty')
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        //добавляет на игровое поле трёхпалубный корабль
+        addShip3Cells(fieldArr)
+        {
+            let randomInteger = this.randomInteger;
+            //выбрать по вертикали или по горизонтали будет размещён корабль
+            let direction = randomInteger(1, 2);
+
+            if(direction == 1)
+            {
+                //размещаем по горизонтали
+                let col = randomInteger(0, 7);
+                let row = randomInteger(0, 9);
+
+                //если линия свободна - вставить корабль
+                if(this.isFreeLine(fieldArr, row, col, 3, 'row'))
+                {
+                    for(let i = 0; i < 3; i++)
+                    {
+                        fieldArr[row][col + i] = 'ship';
+                    }
+                }
+                //если нет - рекурсивно вызываем функцию вставки до тех пор, пока не вставится
+                else
+                {
+                    this.addShip3Cells(fieldArr);
+                }
+            }
+            else
+            {
+                //размещаем по вертикали
+                let row = randomInteger(0, 7);
+                let col = randomInteger(0, 9);
+                if(this.isFreeLine(fieldArr, row, col, 3, 'col'))
+                {
+                    for(let i = 0; i < 3; i++)
+                    {
+                        fieldArr[row + i][col] = 'ship';
+                    }
+                }
+                else
+                {
+                    this.addShip3Cells(fieldArr);
+                }
+            }
+            this.addEmptyCells(fieldArr);
+            return fieldArr;
+        }
+
+        //добавляет на игровое поле двухпалубный корабль
+        addShip2Cells(fieldArr)
+        {
+            //let addShip2Cells = this.addShip2Cells;
+            let randomInteger = this.randomInteger;
+            //выбрать по вертикали или по горизонтали будет размещён корабль
+            let direction = randomInteger(1, 2);
+
+            if(direction == 1)
+            {
+                //размещаем по горизонтали
+                let col = randomInteger(0, 8);
+                let row = randomInteger(0, 9);
+
+                //если линия свободна - вставить корабль
+                if(this.isFreeLine(fieldArr, row, col, 2, 'row'))
+                {
+                    for(let i = 0; i < 2; i++)
+                    {
+                        fieldArr[row][col + i] = 'ship';
+                    }
+                }
+                //если нет - рекурсивно вызываем функцию вставки до тех пор, пока не вставится
+                else
+                {
+                    this.addShip2Cells(fieldArr);
+                }
+            }
+            else
+            {
+                //размещаем по вертикали
+                let row = randomInteger(0, 8);
+                let col = randomInteger(0, 9);
+                if(this.isFreeLine(fieldArr, row, col, 2, 'col'))
+                {
+                    for(let i = 0; i < 2; i++)
+                    {
+                        fieldArr[row + i][col] = 'ship';
+                    }
+                }
+                else
+                {
+                    this.addShip2Cells(fieldArr);
+                }
+            }
+            this.addEmptyCells(fieldArr);
+            return fieldArr;
+        }
+
+        //добавляет на игровое поле однопалубный корабль
+        addShip1Cell(fieldArr)
+        {
+            let col = this.randomInteger(0, 9);
+            let row = this.randomInteger(0, 9);
+            let elem = fieldArr[row][col];
+            if(elem != 'ship' && elem != 'empty')
+            {
+                fieldArr[row][col] = 'ship';
+            }
+            //если нет - рекурсивно вызываем функцию вставки до тех пор, пока не вставится
+            else
+            {
+                this.addShip1Cell(fieldArr);
+            }
+            this.addEmptyCells(fieldArr);
+            return fieldArr;
+        }
+
+        randomInteger(min, max) {
+            let rand = min - 0.5 + Math.random() * (max - min + 1);
+            return Math.round(rand);
+        }
+
+        //добавить пустые ячейки вокруг корабля, чтобы корабли не соприкасались
+        addEmptyCells(fieldArr)
+        {
+            let setEmptyCell = this.setEmptyCell;
+            for(let row = 0; row < 10; row++)
+            {
+                for(let col = 0; col < 10; col++)
+                {
+                    if(fieldArr[row][col] == 'ship')
+                    {
+                        setEmptyCell(fieldArr, row, col+1);
+                        setEmptyCell(fieldArr, row, col-1);
+                        setEmptyCell(fieldArr, row+1, col);
+                        setEmptyCell(fieldArr, row-1, col);
+
+                        setEmptyCell(fieldArr, row+1, col+1);
+                        setEmptyCell(fieldArr, row-1, col-1);
+                        setEmptyCell(fieldArr, row+1, col-1);
+                        setEmptyCell(fieldArr, row-1, col+1);
+                    }
+                }
+            }
+        }
+
+        //добавляет пустую ячейку с проверкой существования элемента массива
+        setEmptyCell(fieldArr, row, col)
+        {
+            if(typeof(fieldArr[row]) != "undefined" && fieldArr[row] !== null)
+                if(typeof(fieldArr[row][col]) != "undefined" && fieldArr[row][col] !== null)
+                    if(fieldArr[row][col] != 'ship')
+                        fieldArr[row][col] = 'empty';
+        }
+
+        //обработчик хода игрока (клика мышью по ячейке поля)
+        gameMoveHandler(event){
+
+            let target = event.target;
+            let cellState = this.state.computerfieldArr[target.dataset.row][target.dataset.col];
+
+            //попадание
+            if(cellState == 'ship')
+            {
+                this.state.gamerCrashedCells++;
+                this.setState({
+                    //увеличиваем счётчик поражённых клеток противника
+                    gamerCrashedCells : this.state.gamerCrashedCells
+                });
+                this.state.computerfieldArr[target.dataset.row][target.dataset.col] = 'crashed';
+
+                this.state.computerFieldArrForGamer[target.dataset.row][target.dataset.col] = 'crashed';
+
+                if(this.isShipFullCrashed(target.dataset.row, target.dataset.col, this.state.computerfieldArr, 'gamer'))
+                {
+                    this.markEmptyCellsAroundCrashedShip(target.dataset.row, target.dataset.col, this.state.computerFieldArrForGamer, this.state.computerCrashedCellsArr, 'gamer');
+                    //console.log('Корабль потоплен');
+                }
+                else
+                {
+                    this.setState({computerCrashedCellsArr : []});
+                    //console.log('Корабль ещё не потоплен');
+                }
+
+                this.checkVictory();
+            }
+
+            //промах
+            else if(cellState == 'empty' || cellState == '')
+            {
+                this.state.computerfieldArr[target.dataset.row][target.dataset.col] = 'miss';
+
+                this.state.computerFieldArrForGamer[target.dataset.row][target.dataset.col] = 'miss';
+
+                //запускаем ход компьютера
+                this.makeComputerMove(null, null);
+            }
+
+            this.setState({
+                computerfieldArr : this.state.computerfieldArr,
+                computerFieldArrForGamer : this.state.computerFieldArrForGamer
+            });
+        }
+
+        //используется 2 раза - для отрисовки поля игрока и поля компьютера
+        //если опция showCellsState = true, то отображается состояние ячейки
+        //если опция clickDisabled = true, то на ячейки нельзя нажимать (чтобы не нажимать по собственному полю)
+        renderGameField(field, showCellsState, clickDisabled)
+        {
+            const gameField = field.map((row, rowNum) => {
+                return <tr key = {rowNum}>
+                    {row.map((cellState, colNum) => {
+                        return <td
+                            key = {colNum}
+                            data-row = {rowNum}
+                            data-col = {colNum}
+                            className = {showCellsState ? cellState : ''}
+                                //кликать можно только если игра не закончилась
+                            onClick = {(clickDisabled || this.state.endGame) ? null : this.gameMoveHandler.bind(this)}
+                        ></td>
+                    })}</tr>
+            });
+            return gameField;
+        }
+
+        //проверка победы
+        checkVictory(){
+            if(this.state.gamerCrashedCells == 20)
+            {
+                this.state.info = "Вы победили";
+                this.state.endGame = true;
+            }
+            else if(this.state.computerCrashedCells == 20)
+            {
+                this.state.info = "Вы проиграли";
+                this.state.endGame = true;
+            }
+
+            this.setState({info : this.state.info, endGame : this.state.endGame});
+            return this.state.endGame;
+        }
+
+        //функция, которая проверяет потоплен ли корабль в ОДНОМ из 4-х возможных направлений( вверх, вниз,
+        //вправо или влево).
+        //Корабль не потоплен, если следующая ячейка после row,col имеет значение ship(ship означает,
+        //что в ячейке находится часть корабля, по которой ещё не выстрелили)
+        //Корабль потоплен в этом направлении, если ячейка после row,col имеет значение empty
+        //Если ячейка после row,col имеет значение 'crashed', то необходима новая проверка( рекурсивный вызов checkLineToCrashed)
+
+        checkLineToCrashed(row, rowDisplacement, col, colDisplacement, field, gamer){
+            //console.log('checkLineToCrashed вызвана для ячейки', row, col);
+            // массив, в который будут добавляться поражённые ячейки для последующего использования в функции
+            // markEmptyCellsAroundCrashedShip
+
+            let flag = true; // изначально считаем, что корабль потоплен
+
+            if(gamer == 'gamer'){
+                this.state.computerCrashedCellsArr.push([+row,+col]);
+                this.setState({computerCrashedCellsArr : this.state.computerCrashedCellsArr});
+
+            }
+            else if(gamer == 'computer'){
+                this.state.gamerCrashedCellsArr.push([+row,+col]);
+                this.setState({gamerCrashedCellsArr : this.state.gamerCrashedCellsArr});
+            }
+
+            let rowDisp = +row + +rowDisplacement; //строка со смещением
+            let colDisp = +col + +colDisplacement; //столбец со смещением
+
+            if(this.checkNumInRange(rowDisp, 0, 9) && this.checkNumInRange(colDisp, 0, 9))
+            {
+                let cellWithDisplacementState = field[rowDisp][colDisp];
+                if(cellWithDisplacementState == 'ship')
+                {
+                    flag = false;
+                    return flag;
+                }
+                else if(cellWithDisplacementState == 'crashed'){
+                    if(gamer == 'gamer'){
+                        this.state.computerCrashedCellsArr.push([rowDisp, colDisp]);
+                        this.setState({computerCrashedCellsArr : this.state.computerCrashedCellsArr});
+                    }
+                    else if(gamer == 'computer'){
+                        this.state.gamerCrashedCellsArr.push([rowDisp, colDisp]);
+                        this.setState({gamerCrashedCellsArr : this.state.gamerCrashedCellsArr});
+                    }
+                    return this.checkLineToCrashed(rowDisp, rowDisplacement, colDisp, colDisplacement, field, gamer);
+                }
+                else if(cellWithDisplacementState == 'empty' ||
+                    cellWithDisplacementState == '' ||
+                    cellWithDisplacementState == 'miss'
+                ){
+                    return flag;
+                }
+            }
+            else
+            {
+                return flag;
+            }
+            return flag;
+        }
+
+        /*проверяет, потоплен ли корабль полностью
+        Для этого вызывается функция checkLineToCrashed 4 раза, чтобы проверить все направлениям
+        Корабль будет потоплен, если он потоплен во всех четырёх направлениях
+        Корабль будет непотоплен, если он не потоплен хотя бы в одном направлении
+        */
+
+        isShipFullCrashed(row, col, field, gamer){
+            //проверим 4 направления. Если корабль подбит по всем 4-м направлениям, то он подбит
+            // если он не подбит хотя бы по одному направлению, то он неподбит
+            if( this.checkLineToCrashed(row, 1, col, 0, field, gamer)&&
+                this.checkLineToCrashed(row, -1, col, 0, field, gamer)&&
+                this.checkLineToCrashed(row, 0, col, 1, field, gamer)&&
+                this.checkLineToCrashed(row, 0, col, -1, field, gamer))
+                return true;
+            else
+                return false;
+        }
+
+        checkNumInRange(num, min, max)
+        {
+            return ( (num >= min) && (num <= max) );
+        }
+
+        isCellEmpty(field, row, col){
+            if(typeof(field[row]) != "undefined" && field[row] !== null)
+            {
+                if(typeof(field[row][col]) != "undefined" && field[row][col] !== null)
+                    return (field[row][col] == 'empty'|| field[row][col] == '');
+            }
+            return false;
+        }
+
+        //удаляет ячейку [row,col] из массива свободных для стрельбы клеток
+        delCellFromGamerFieldArrFreeToHit(row,col){
+            for(let [index,cell] of this.state.gamerFieldArrFreeToHit.entries())
+            {
+                if( (cell[0] == row) && (cell[1] == col))
+                {
+                    this.state.gamerFieldArrFreeToHit.splice(index,1);
+                    this.setState({gamerFieldArrFreeToHit : this.state.gamerFieldArrFreeToHit});
+                }
+            }
+
+        }
+
+        //отмечаем серым цветом клетки вокруг потопленного корабля
+        markEmptyCellsAroundCrashedShip(row, col, field, crashedCellsArr, gamer){
+
+            for(let cell of crashedCellsArr)
+            {
+                let row = cell[0];
+                let col = cell[1];
+
+                if(gamer == 'computer')
+                {
+                    this.delCellFromGamerFieldArrFreeToHit(row+1,col);
+                    this.delCellFromGamerFieldArrFreeToHit(row-1,col);
+                    this.delCellFromGamerFieldArrFreeToHit(row+1,col+1);
+                    this.delCellFromGamerFieldArrFreeToHit(row+1,col-1);
+                    this.delCellFromGamerFieldArrFreeToHit(row-1,col-1);
+                    this.delCellFromGamerFieldArrFreeToHit(row-1,col+1);
+                    this.delCellFromGamerFieldArrFreeToHit(row,col+1);
+                    this.delCellFromGamerFieldArrFreeToHit(row,col-1);
+                }
+                if(this.isCellEmpty(field, row + 1, col)){
+                    field[row + 1][col] = 'miss';
+                }
+                if(this.isCellEmpty(field, row - 1, col)){
+                    field[row - 1][col] = 'miss';
+                }
+                if(this.isCellEmpty(field, row + 1, col + 1)){
+                    field[row + 1][col + 1] = 'miss';
+                }
+                if(this.isCellEmpty(field, row + 1, col - 1)){
+                    field[row + 1][col - 1] = 'miss';
+                }
+                if(this.isCellEmpty(field, row - 1, col - 1)){
+                    field[row - 1][col - 1] = 'miss';
+                }
+                if(this.isCellEmpty(field, row - 1, col + 1)){
+                    field[row - 1][col + 1] = 'miss';
+                }
+                if(this.isCellEmpty(field, row, col + 1)){
+                    field[row][col + 1] = 'miss';
+                }
+                if(this.isCellEmpty(field, row, col - 1)){
+                    field[row][col - 1] = 'miss';
+                }
+
+            }
+
+            //this.state.computerCrashedCellsArr = [];
+            //this.setState({computerCrashedCellsArr : this.state.computerCrashedCellsArr});
+        }
+
+        isCellInFreeToHitArray(row, col){
+            if(this.state.gamerFieldArrFreeToHit[row] != 'undefined')
+                return (this.state.gamerFieldArrFreeToHit[row][col] != 'undefined');
+            else
+                return false;
+        }
+
+        //функция, которая выбирает, куда сходит компьютер, если он уже попал
+        //выбирается одна из 4-х ближайших ячеек, но только если они есть в массиве gamerFieldArrFreeToHit
+        //(т.е. там, куда компьютер ещё не стрелял)
+        selectNextCell(row,col){
+
+            let cells = []; //массив, в который будем добавлять ячейки, в которые можно сходить
+            if(this.checkNumInRange(row+1, 0, 9))
+                if(this.isCellInFreeToHitArray(row + 1, col))
+                    cells.push([row + 1, col]);
+            if(this.checkNumInRange(row-1, 0, 9))
+                if(this.isCellInFreeToHitArray(row - 1, col))
+                    cells.push([row - 1, col]);
+            if(this.checkNumInRange(col+1, 0, 9))
+                if(this.isCellInFreeToHitArray(row, col + 1))
+                    cells.push([row, col + 1]);
+            if(this.checkNumInRange(col-1, 0, 9))
+                if(this.isCellInFreeToHitArray(row, col - 1))
+                    cells.push([row, col - 1]);
+
+            if (cells.length != 0)
+            {
+                let num = this.randomInteger(0, cells.length - 1);
+                //console.log('Выбрана ячейка',cells[num]);
+                return cells[num];
+            }
+            else{
+                //console.log('Выбрана случайная ячейка');
+                return this.getRandomCellFromGamerFieldArrFreeToHit();
+            }
+        }
+
+        getRandomCellFromGamerFieldArrFreeToHit(){
+            let num = this.randomInteger(0, this.state.gamerFieldArrFreeToHit.length - 1);
+            let randomCell = this.state.gamerFieldArrFreeToHit[num];
+            this.state.gamerFieldArrFreeToHit.splice(num,1);
+            this.setState({gamerFieldArrFreeToHit : this.state.gamerFieldArrFreeToHit});
+            //console.log('this.state.gamerFieldArrFreeToHit', this.state.gamerFieldArrFreeToHit);
+            return randomCell;
+        }
+
+        //реализует ход компьютера
+        makeComputerMove(row, col){
+            //Если в предыдущий ход компьютер ещё не попадал по кораблю, выбираем куда стрелять случайно
+            if(!this.state.computerIsAlreadyHit || row == null || col == null){
+                [row, col] = this.getRandomCellFromGamerFieldArrFreeToHit();
+                //console.log('!computerIsAlreadyHit',row,col);
+            }
+            //Если уже попал, то выбираем одну из соседних ячеек
+            else{
+                [row, col] = this.selectNextCell(row,col);
+            }
+
+            let cellState = this.state.gamerfieldArr[row][col];
+            //проверка, что ещё не стреляли в эту ячейку
+            if(cellState != 'miss' && cellState != 'crashed'){
+                //если компьютер попал
+                if(cellState == 'ship')
+                {
+
+                    this.state.gamerfieldArr[row][col] = 'crashed';
+                    this.state.computerCrashedCells++;
+                    this.state.computerIsAlreadyHit = true;
+
+                    if(this.isShipFullCrashed(row, col, this.state.gamerfieldArr, 'computer'))
+                    {
+                        this.markEmptyCellsAroundCrashedShip(row, col, this.state.gamerfieldArr, this.state.gamerCrashedCellsArr , 'computer');
+                    }
+                    else
+                    {
+                        //Обнуляем массив с уже поражёнными клетками. Это нужно, чтобы в функции
+                        //markEmptyCellsAroundCrashedShip отмечались только клетки вокруг полнотью потопленного корабля
+                        //если массив не обнулить, то отметятся все клетки вокруг задетых клеток, даже если корабль ещё
+                        //не потоплен полностью
+                        this.setState({gamerCrashedCellsArr : []});
+                    }
+                    this.setState({
+                        computerCrashedCells : this.state.computerCrashedCells,
+                        computerIsAlreadyHit : this.state.computerIsAlreadyHit
+                    });
+
+
+                    //Если компьютер победил - останавливаем игру
+                    if(!this.checkVictory())
+                        this.makeComputerMove(row,col);
+                }
+                else
+                {
+                    this.state.gamerfieldArr[row][col] = 'miss';
+                    this.state.computerIsAlreadyHit = false;
+                    this.setState({	computerIsAlreadyHit : this.state.computerIsAlreadyHit});
+
+                    this.delCellFromGamerFieldArrFreeToHit(row,col);
+                }
+                this.setState({gamerfieldArr : this.state.gamerfieldArr});
+            }
+            //иначе вызываем рекурсивно ход компьютера
+            else{
+                this.makeComputerMove(row,col);
+            }
+        }
+
+        render(){
+            const gamerField = this.renderGameField(this.state.gamerfieldArr, true, true);
+            const computerField = this.renderGameField(this.state.computerfieldArr, true , true);
+            const computerField2 = this.renderGameField(this.state.computerFieldArrForGamer, true , false);
+
+            return  <div id = 'parent'>
+                <div id = 'info'>{this.state.info}</div>
+                <div id = 'gamerField'>
+                    <h2>Ваше поле</h2>
+                    <table>
+                        <tbody>
+                        {gamerField}
+                        </tbody>
+                    </table>
+                </div>
+                <div id = 'computerField'>
+                    <h2>Поле компьютера</h2>
+                    <table>
+                        <tbody>
+                        {computerField2}
+                        </tbody>
+                    </table>
+                </div>
+                <button onClick = {this.componentDidMount.bind(this)}>Новая игра</button>
+            </div>
+        }
+    }
+
+    ReactDOM.render(<App/>, document.getElementById('content'));
+</script>
+</body>
+</html>
